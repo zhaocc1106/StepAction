@@ -92,7 +92,11 @@ function gen_new_old () {
 				break
 			fi
 
-			if [[ $status_line =~ 'no changes added'.* || $status_line =~ .*修改尚未加入提交.* ]]; then
+			if [[ $status_line =~ 'no changes added'.* || $status_line =~ '修改尚未加入提交'.* ]]; then
+				break
+			fi
+
+			if [[ $status_line =~ 'nothing added to commit'.* || $status_line =~ '提交为空'.* ]]; then
 				break
 			fi
 			
