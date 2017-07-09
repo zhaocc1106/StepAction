@@ -1,0 +1,22 @@
+1.脚本功能
+针对过滤log时需要从代码中反复查找相关TAG过程重复、繁琐的问题。该脚本目的是为了简化TAG的查找、复制、输入的繁琐过程。只需要按照特定格式将一些TAG信息保存到配置文件中，脚本会根据命令参数显示对应的TAG信息，或者自动添加TAG信息。目前主要的功能有如下两者：
+	(1)输入带-help参数的命令显示您所需的TAG信息。
+	(2)输入带TAG分类参数的命令自动填补TAG信息
+
+
+
+
+2.使用方法
+	(1)将myGrep目录中的myConfig.conf和mygrep复制到home/***/bin/目录下
+	(2)放开mygrep的执行权限sudo chmod a+x mygrep
+	(3)在任何地方都可以执行mygrep命令，mygrep两种命令格式如下：
+	mygrep -type_major -help 用于显示major相关的所有TAG信息。
+	mygrep -type_major -type_minor 后面的部分可以输入grep命令内容（不包括关键字），例如：mygrep -BT -opp -rnEi main.log > sel.txt
+
+
+
+3.myConfig.conf配置文件的填充
+	格式如下：
+	[major]
+	-minor TAG1|TAG2|TAG3|... #注释部分
+	例子见myConfig.conf文件例子，注意minor和TAG和注释部分必须用空格隔开。

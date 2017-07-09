@@ -1,0 +1,341 @@
+#! /bin/bash
+arg1=$1
+arg2=$2
+arg3=$3
+args=$*
+#for var in "$args"
+#do
+#    echo "$var"
+#done
+
+
+
+DIFF_LIST="${HOME}/bin/sample_code_creator/diffList"
+SAMPLE_CODE_DIR="${HOME}/sample_code_for_cq/"
+SAMPLE_CODE_NAME="${arg3}_$(date +%y%m%d%H%M%S)"
+SAMPLE_CODE_PATH="${SAMPLE_CODE_DIR}${SAMPLE_CODE_NAME}/"
+#echo $SAMPLE_CODE_PATH
+GIT_STATUS_FILE_TMP="${HOME}/bin/sample_code_creator/status.tmp"
+HELP_FILE="${HOME}/bin/sample_code_creator/readme"
+
+option=""
+line=""
+src_root=""
+diff_name=""
+# The function used to generate the new and old.
+function gen_new_old () {
+	echo  "generate for new and old"
+	if [ -e $GIT_STATUS_FILE_TMP ]; then
+		rm -rf $GIT_STATUS_FILE_TMP
+	fi
+	git status > $GIT_STATUS_FILE_TMP
+
+	local status_line=""
+	local has_untracked=0
+	local need_skip=0
+	local full_path_new=""
+	local full_path_old=""
+	local full_dir_new=""
+	local full_dir_old=""
+	while read status_line
+	do
+		#echo $status_line
+		if [[ $status_line =~ .*modified:.* || $status_line =~ .*修改:.* ]]; then
+		
+			#for modified begin
+			status_line=${status_line#*modified:}		#remove string before "modified:"
+			status_line=${status_line#*修改:}
+			status_line=${status_line// /}				#remove space
+
+			echo $status_line
+			if [[ $status_line =~ \.\.\/.* ]]; then		#skip string begin with "../" 
+				continue
+			fi
+
+			full_path_new=${SAMPLE_CODE_PATH}new/${line}/$status_line
+			full_path_old=${SAMPLE_CODE_PATH}old/${line}/$status_line
+
+			full_dir_new=${full_path_new%/*}
+			full_dir_old=${full_path_old%/*}
+
+			mkdir -p $full_dir_new
+			mkdir -p $full_dir_old
+			#echo "new: $full_dir_new"
+			#echo "old: $full_dir_old"
+
+			echo -e "\033[31mcopy\033[0m $status_line \033[31mto\033[0m $full_path_new"
+			cp $status_line $full_path_new
+
+			git checkout $status_line
+
+			cp $status_line $full_path_old
+
+			#echo $option
+			#echo $diff_name
+			if [ $option = "keep" -a -e $diff_name ]; then
+				git apply $diff_name 
+			fi
+			#for modified end
+
+		elif [[ $status_line =~ .*Untracked.* || $status_line =~ .*未跟踪的文件:.* ]]; then
+			has_untracked=1
+			need_skip=2
+		elif [ $has_untracked == 1 -a $need_skip != 0 ]; then
+			need_skip=`expr $need_skip - 1`
+			continue
+		elif [ $has_untracked == 1 -a $need_skip == 0 ]; then
+
+			#echo $status_line
+
+			if [ -z $status_line ]; then
+				has_untracked=0
+				break
+			fi
+
+			if [[ $status_line =~ 'no changes added'.* || $status_line =~ .*修改尚未加入提交.* ]]; then
+				break
+			fi
+			
+			#for untracked files begin
+			if [[ $status_line =~ '# '.* || $status_line =~ '#	'.* ]]; then
+				status_line=${status_line#\#}			#remove '#'
+			fi
+			status_line=${status_line// /}				#remove space
+			status_line=${status_line//	/}				#remove tab
+
+			if [[ $status_line =~ \.\.\/.* ]]; then		#skip string begin with "../" 
+				continue
+			fi
+
+			full_path_new=${SAMPLE_CODE_PATH}new/${line}/$status_line
+			full_path_old=${SAMPLE_CODE_PATH}old/${line}/$status_line
+			
+			full_dir_new=${full_path_new%/*}
+			full_dir_old=${full_path_old%/*}
+
+			mkdir -p $full_dir_new
+			mkdir -p $full_dir_old
+	
+			#echo "new: $full_dir_new"
+			#echo "old: $full_dir_old"
+
+			echo -e "\033[31mcopy\033[0m $status_line \033[31mto\033[0m $full_path_new"
+			cp $status_line $full_path_new
+
+			if [ $option = "clear" ]; then
+				rm -rf $status_line
+			fi
+
+			#for untracked files end
+		
+		fi
+	done < $GIT_STATUS_FILE_TMP
+	unset status_line
+	unset has_untracked
+	unset need_skip
+	unset full_path_new
+	unset full_path_old
+	unset full_dir_new
+	unset full_dir_old
+}
+
+
+
+
+
+
+# The function used to generate the file for each diff.
+function gen_for_each_diff () {
+	echo  "generate for each .diff file"
+	cd ${PWD}/${line}
+
+	if [ $? -ne 0 ]; then
+		echo "cd failed for ${PWD}/${line}"
+		return
+	fi
+
+	#echo $PWD	
+	#git diff 
+	
+	diff_name=${SAMPLE_CODE_PATH}${line////.}.diff
+	echo "copy $diff_name"
+
+	#echo $diff_name
+	git diff > $diff_name				#copy the diff file.
+	if [ ! -s $diff_name ]; then
+		rm -rf $diff_name
+		echo "diff is empty file and remove it"
+	fi
+
+	gen_new_old
+
+	cd $src_root
+}
+
+
+# The function used to begin to generate sample code.
+function gen_sample_code () {
+	#echo "gen_sample_code"
+
+	#Firstly, mkdir for CQ. The default path is "/home/***/sample_code_for_cq/"
+	echo -e 'mkdir' " for \033[32m ${SAMPLE_CODE_PATH} \033[0m"
+	mkdir -p  $SAMPLE_CODE_PATH
+	
+	if [ $? -ne 0 ]; then
+		echo "mkdir failed for $SAMPLE_CODE_PATH"
+		exit 1
+	fi
+
+	src_root=$PWD
+	#Secondly, read diffList and copy the file of each diff.
+	while read line
+	do
+		line=${line#/}				 #delete the / at the leftmost
+		line=${line%/}				 #delete the / at the rightmost
+
+		if [ ! -z $line ]; then  
+			gen_for_each_diff
+		fi
+	done < $DIFF_LIST
+
+	cd $SAMPLE_CODE_PATH 
+	
+	meld new old &
+}
+
+
+# The function used to clear the diffList.
+function clear_diff_list () {
+	if [ ! -s $DIFF_LIST ]; then
+		echo "diff list is empty"
+		return
+	fi
+	rm -rf $DIFF_LIST
+	touch $DIFF_LIST
+	echo "clear diffList successfully"
+}
+
+
+# The function used to add one diff dir to diffList.
+function add_dir_to_diff_list () {
+	local argn=0
+	for var in $args
+	do
+		#echo $var
+		argn=`expr $argn + 1`
+		if [ $argn -lt 3 ]; then		#skip arg1 arg2
+			continue
+		fi
+		local diff_line=""
+		while read diff_line
+		do
+			if [ $diff_line == $var ]; then
+				echo -e "\033[31m$var has been existed\033[0m"
+				continue 2
+			fi
+		done < $DIFF_LIST
+		echo $var >> $DIFF_LIST
+		echo -e "\033[32madd ${var} to diffList successfully\033[0m"
+		unset diff_line
+	done
+	unset argn
+}
+
+# The function used to delete one diff dir from diffList.
+function delete_dir_from_diff_list () {
+	local argn=0
+	for var in $args
+	do
+		argn=`expr $argn + 1`
+		if [ $argn -lt 3 ]; then
+			continue
+		fi
+		local diff_line=""
+		local num=0
+		local exist=0
+		while read diff_line
+		do
+			num=`expr $num + 1`
+			if [ $diff_line == $var ]; then
+				#echo $num
+				sed -i "${num}d" $DIFF_LIST
+				exist=1
+			fi
+		done < $DIFF_LIST
+	
+		if [ $exist == 1 ]; then
+			echo -e "\033[32mdelete ${var} from diffList successfully\033[0m"
+		else
+			echo -e "\033[31m$var  not exist\033[0m"
+		fi
+		unset diff_line
+		unset num
+		unset exist
+	done
+	unset argn
+}
+
+# The function used to show diffList.
+function show_diff_list () {
+	if [ ! -s $DIFF_LIST ]; then
+		echo "diff list is empty"
+		return
+	fi
+	cat $DIFF_LIST
+}
+
+# The main function.
+function main () {
+	if [[ $arg1 =~ -g.* ]]; then
+		if [ -z $arg3 ]; then
+			echo "arg3 not exist"
+			return
+		fi
+		if [ $arg2 = "-c" ]; then
+		  option="clear"
+		elif [ $arg2 = "-k" ]; then
+			option="keep"
+		else
+		  echo "wrong arg2"
+		fi
+		gen_sample_code
+		if [ $arg1 = "-gz" ]; then
+			echo ${SAMPLE_CODE_PATH%/*}.zip
+			cd $SAMPLE_CODE_DIR 
+			zip -r ${SAMPLE_CODE_NAME}.zip $SAMPLE_CODE_NAME
+			#echo 'zip' -r ${SAMPLE_CODE_NAME}.zip $SAMPLE_CODE_NAME
+			echo -e "zip success: \033[32m${SAMPLE_CODE_PATH%/*}.zip\033[0m"
+			
+		fi
+	elif [ $arg1 = "-dl" ]; then
+		if [ $arg2 = "-c" ]; then
+			clear_diff_list		
+		elif [ $arg2 = "-s" ]; then
+			show_diff_list
+		elif [ $arg2 = "-a" ]; then
+			if [ -z $arg3 ]; then
+				echo "arg3 not exist"
+				return
+			fi
+			add_dir_to_diff_list
+		elif [ $arg2 = "-d" ]; then
+			if [ -z $arg3 ]; then
+				echo "arg3 not exist"
+				return
+			fi
+			delete_dir_from_diff_list
+		else
+			echo "wrong arg2"
+		fi
+
+	elif [ $arg1 = "-v" ]; then
+		echo "v1.1.1"
+	elif [ $arg1 = "--help" ]; then 
+		cat $HELP_FILE	
+	else
+		echo "wrong arg1"
+	fi
+}
+
+
+main
