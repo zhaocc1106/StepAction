@@ -165,7 +165,7 @@ function gen_for_each_diff () {
 	echo "copy $diff_name"
 
 	#echo $diff_name
-	git diff > $diff_name				#copy the diff file.
+	git diff . > $diff_name				#copy the diff file.
 	if [ ! -s $diff_name ]; then
 		rm -rf $diff_name
 		echo "diff is empty file and remove it"
