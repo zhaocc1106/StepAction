@@ -28,7 +28,7 @@ function gen_new_old () {
 	if [ -e $GIT_STATUS_FILE_TMP ]; then
 		rm -rf $GIT_STATUS_FILE_TMP
 	fi
-	git status > $GIT_STATUS_FILE_TMP
+	git status . > $GIT_STATUS_FILE_TMP
 
 	local status_line=""
 	local has_untracked=0
