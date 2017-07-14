@@ -17,6 +17,7 @@ SAMPLE_CODE_PATH="${SAMPLE_CODE_DIR}${SAMPLE_CODE_NAME}/"
 #echo $SAMPLE_CODE_PATH
 GIT_STATUS_FILE_TMP="${HOME}/bin/sample_code_creator/status.tmp"
 HELP_FILE="${HOME}/bin/sample_code_creator/readme"
+FTP_CONFIG="${HOME}/bin/sample_code_creator/ftp.conf"
 
 option=""
 line=""
@@ -204,7 +205,7 @@ function gen_sample_code () {
 
 	cd $SAMPLE_CODE_PATH 
 	
-	meld new old &
+	meld new old
 }
 
 
@@ -288,6 +289,40 @@ function show_diff_list () {
 	cat $DIFF_LIST
 }
 
+
+# The function used to upload sample code to ftp.
+function upload_sample_code () {
+	echo "will you upload the sample code?"
+	echo "yes[y] no[n]"
+	select=""
+	read select
+	#echo $select
+
+	if [ $select = "y" ]; then
+		echo "please input cq log path (such as SPCSS/2017-2/SPCSS00378548):"
+		read upload_path
+		#echo $upload_path
+
+		read config < $FTP_CONFIG
+
+		host=${config#*host:}
+		host=${host%% *}
+		#echo $host
+
+		user=${config#*user:}
+		user=${user%% *}
+		#echo $user
+
+		passwd=${config#*pwd:}
+		passwd=${passwd// /}
+		#echo $passwd
+
+		#echo "pscp -l ${user} -pw ${passwd} ${SAMPLE_CODE_PATH%/*}.zip ${host}:${upload_path}/${SAMPLE_CODE_NAME}.zip"
+		pscp -l ${user} -pw ${passwd} ${SAMPLE_CODE_PATH%/*}.zip ${host}:${upload_path}/PatchesForCUS/${SAMPLE_CODE_NAME}.zip
+		pscp -l ${user} -pw ${passwd} -ls ${host}:/${upload_path}/PatchesForCUS
+	fi
+}
+
 # The main function.
 function main () {
 	if [[ $arg1 =~ -g.* ]]; then
@@ -309,6 +344,8 @@ function main () {
 			zip -r ${SAMPLE_CODE_NAME}.zip $SAMPLE_CODE_NAME
 			#echo 'zip' -r ${SAMPLE_CODE_NAME}.zip $SAMPLE_CODE_NAME
 			echo -e "zip success: \033[32m${SAMPLE_CODE_PATH%/*}.zip\033[0m"
+
+			upload_sample_code
 			
 		fi
 	elif [ $arg1 = "-dl" ]; then
