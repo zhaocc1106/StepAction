@@ -292,15 +292,22 @@ function show_diff_list () {
 
 # The function used to upload sample code to ftp.
 function upload_sample_code () {
+	echo ""
+	echo ""
+	echo ""
 	echo "will you upload the sample code?"
-	echo "yes[y] no[n]"
+	#echo "yes[y] no[n]"
 	select=""
-	read select
+	read -p "yes[y] no[n]" select
 	#echo $select
 
 	if [ $select = "y" ]; then
 		echo "please input cq log path (such as SPCSS/2017-2/SPCSS00378548):"
 		read upload_path
+		if [ -z $upload_path ]; then
+			echo "null path"
+			return
+		fi
 		#echo $upload_path
 
 		read config < $FTP_CONFIG

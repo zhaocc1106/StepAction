@@ -1,0 +1,81 @@
+#! /bin/bash
+arg0=$0
+arg1=$1
+arg2=$2
+arg3=$3
+
+DEFAULT_FTP_CONFIG="/home/zhaocc/StepAction/StepAction/logManager/ftp_def.conf"
+#echo $@
+
+
+# The function used to download log from ftp.
+function download_log () {
+	echo "download_log"
+	
+	#read default ftp config
+	read config < DEFAULT_FTP_CONFIG
+
+	
+}
+
+# The function used to ftp operation.
+function ftp_operation () {
+	echo "ftp_operation"
+	
+	case $arg2 in
+		-d)	download_log
+			;;
+		
+		-r) retrieve
+			;;
+
+		-c) config
+			;;
+
+		*) echo "wrong arg2"
+			;;
+	esac
+}
+
+
+# The function used to enter the log dir.
+function enter_log_dir () {
+	echo "enter_log_dir"
+}
+
+
+# The function used to delete log.
+function delete_log () {
+	echo "delete_log"
+}
+
+
+
+# The main function
+function main () {
+
+	case $arg1 in
+		-f) ftp_operation
+			;;
+		
+		-e) enter_log_dir
+			;;
+
+		-d) delete_log
+			;;
+
+		-v) echo "v1.0.0"
+			;;
+
+		--help) echo "show readme"
+			;;
+
+		*) 
+			echo "`basename ${arg0}`: uasage: [ -f operation ftp_path ] | [ -e log_name ] | [ -d log_name ] | [ -v ] | [ --help ]"
+			;;
+	esac
+	
+}
+
+
+main
