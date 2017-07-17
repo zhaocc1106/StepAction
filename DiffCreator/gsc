@@ -377,7 +377,7 @@ function main () {
 		fi
 
 	elif [ $arg1 = "-v" ]; then
-		echo "v1.1.1"
+		echo "v1.2.1"
 	elif [ $arg1 = "--help" ]; then 
 		cat $HELP_FILE	
 	else
