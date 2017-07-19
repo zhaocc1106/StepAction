@@ -4,26 +4,160 @@ arg1=$1
 arg2=$2
 arg3=$3
 
-DEFAULT_FTP_CONFIG="/home/zhaocc/StepAction/StepAction/logManager/ftp_def.conf"
+DEFAULT_FTP_CONFIG="${HOME}/bin/logManager/ftp_def.conf"
+DEFAULT_LOG_DIR="${HOME}/log_for_cq"
+FTP_DIR_TMP="${HOME}/bin/logManager/ftp_dir.tmp"
+LOCAL_DIR_TMP="${HOME}/bin/logManager/local_dir.tmp"
+HELP_PATH="${HOME}/bin/logManager/readme"
 #echo $@
 
+# The function used to edit the config of ftp.
+function config () {
+	echo "config"
+}
+
+# The function used to retrieve all ftp host in ftp config to find path of log.
+function retrieve () {
+	echo "retrieve"
+}
 
 # The function used to download log from ftp.
 function download_log () {
-	echo "download_log"
+#	echo "download_log"
 	
 	#read default ftp config
-	read config < DEFAULT_FTP_CONFIG
+	download_path=$arg3
+	if [ -z $download_path ]; then
+		echo "none cq path, please input such as 'logm -ftp -down SPCSS/2017-2/SPCSS00378548'"
+		return
+	fi
+	#echo $download_path
 
-	
+	read config < $DEFAULT_FTP_CONFIG
+
+	host=${config#*host:}
+	host=${host%% *}
+	#echo $host
+
+	user=${config#*user:}
+	user=${user%% *}
+	#echo $user
+
+	passwd=${config#*pwd:}
+	passwd=${passwd// /}
+	#echo $passwd
+
+	if [ -e $FTP_DIR_TMP ]; then
+		rm -rf $FTP_DIR_TMP  
+	fi
+	pscp -l ${user} -pw ${passwd} -ls ${host}:/${download_path} > $FTP_DIR_TMP
+	echo -e "\033[32mlisting...\033[0m"
+	firstskip=1
+	array_id=1
+	while read line
+	do
+#		echo $line
+
+		if [ $firstskip = 1 ]; then
+			firstskip=0
+			continue
+		fi
+
+		name=${line#*:}
+#		echo $name
+		name=${name#* }
+#		echo $name
+
+		new_name=${name// /\\ }		#replace space to \space
+#		echo $new_name
+
+		
+		if [ "$name" = "PatchesForCUS" ]; then
+#			echo "is PatchesForCUS, skip"
+			continue
+		fi
+
+		file_array[$array_id]=$name
+#		echo "file_array[$array_id]=$name"
+
+		echo [${array_id}]  $line
+		array_id=`expr $array_id + 1`
+
+	done < $FTP_DIR_TMP
+
+
+	#remove the '/' at rightmost if has.
+	download_path=${download_path%/}
+
+	cqID=${download_path##*/}
+#	echo "cqID = $cqID"
+
+	file_full_path=${DEFAULT_LOG_DIR}/$(date +%y%m%d)_$cqID
+
+	mkdir -p $file_full_path
+
+	echo ""
+
+	echo "will you download all ?"
+
+	read -p "yes[y] no[n]" sel 
+
+	if [ $sel = "y" ]; then
+		
+		skipfirst=1
+		while read line
+		do
+#			echo $line
+
+			if [ $skipfirst == 1 ]; then
+				skipfirst=0
+				continue
+			fi
+
+			name=${line#*:}
+#			echo $name
+			name=${name#* }
+#			echo $name
+
+			name=${name// /\\ }		#replace space to \space
+#			echo $name
+
+			if [ "$name" = "PatchesForCUS" ]; then
+#				echo "is PatchesForCUS, skip"
+				continue
+			fi
+
+
+
+			echo -e "\033[32mdownload $name to $file_full_path...\033[0m"
+#			echo "pscp -l ${user} -pw ${passwd} ${host}:${download_path}/$name $file_full_path"
+			pscp -l ${user} -pw ${passwd} "${host}:${download_path}/$name" $file_full_path
+
+		done < $FTP_DIR_TMP
+		
+		#echo "pscp -r -scp -l ${user} -pw ${passwd} ${host}:${download_path}/ ${file_full_path}/"
+		#pscp -r -scp -l ${user} -pw ${passwd} ${host}:${download_path}/ ${file_full_path}/
+		return
+	fi
+
+	echo "please select the file id(id not name!) you will download (split by space):"
+
+	read array_id
+
+	for id in $array_id
+	do
+#		echo "pscp -l ${user} -pw ${passwd} ${host}:${download_path}/${file_array[$id]} $file_full_path"
+		 echo -e "\033[32mdownload ${file_array[$id]} to $file_full_path...\033[0m"
+		pscp -l ${user} -pw ${passwd} "${host}:${download_path}/${file_array[$id]}" $file_full_path
+	done
 }
 
 # The function used to ftp operation.
 function ftp_operation () {
-	echo "ftp_operation"
+#	echo "ftp_operation"
 	
 	case $arg2 in
-		-d)	download_log
+		-down)	download_log
 			;;
 		
 		-r) retrieve
@@ -38,15 +172,79 @@ function ftp_operation () {
 }
 
 
-# The function used to enter the log dir.
-function enter_log_dir () {
-	echo "enter_log_dir"
+# The function used to find the log dir.
+function find_log_dir () {
+#	echo "enter_log_dir"
+	if [ -z $arg2 ]; then
+		echo "none cq id!"
+		return
+	fi
+
+	echo "please input 'cd $DEFAULT_LOG_DIR/*${arg2}*'"
+	#cd  $DEFAULT_LOG_DIR/*${arg2}*
+}
+
+
+# The function used to delete cqlog dir by cq id.
+function delete_log_by_cq () {
+#	echo "delete_log_by_cq"	
+
+	if [ -z $arg3 ]; then
+		echo "none cq id!"
+		return
+	fi
+
+	echo "removing ${DEFAULT_LOG_DIR}/*${arg3}*..."
+	rm -rf ${DEFAULT_LOG_DIR}/*${arg3}*
+}
+
+# The function used to delete cqlog dir by date.
+function delete_log_by_date() {
+#	echo "delete_log_by_date"
+
+	down_date=$arg3
+#	echo "down_date = $down_date"
+	if [ -z $down_date ]; then
+		echo "none date, please input such as use 'logm -del 170625' to delete dir before 170625"
+		return
+	fi
+
+	cd ${DEFAULT_LOG_DIR}
+	ls -l -t > $LOCAL_DIR_TMP
+
+	while read line
+	do
+		dir_name=${line##* }
+		if [[ ! $dir_name =~ .*_.* ]]; then
+#			echo "unkown format"
+			continue	
+		fi
+
+#		echo $dir_name
+		dir_date=${dir_name%_*}
+#		echo "dir_date = $dir_date"
+
+		if [ $dir_date -lt $down_date ]; then
+			echo "removing $dir_name..."
+			rm -rf $dir_name
+		fi
+	done < $LOCAL_DIR_TMP
 }
 
 
 # The function used to delete log.
 function delete_log () {
-	echo "delete_log"
+#	echo "delete_log"
+	case $arg2 in
+	    -cq) delete_log_by_cq 
+	    ;;
+ 
+	    -date) delete_log_by_date
+	    ;;
+ 
+		*) echo "wrong arg2"
+	esac
+
 }
 
 
@@ -55,23 +253,23 @@ function delete_log () {
 function main () {
 
 	case $arg1 in
-		-f) ftp_operation
+		-ftp) ftp_operation
 			;;
 		
-		-e) enter_log_dir
+		-find) find_log_dir
 			;;
 
-		-d) delete_log
+		-del) delete_log
 			;;
 
 		-v) echo "v1.0.0"
 			;;
 
-		--help) echo "show readme"
+		--help) cat $HELP_PATH
 			;;
 
 		*) 
-			echo "`basename ${arg0}`: uasage: [ -f operation ftp_path ] | [ -e log_name ] | [ -d log_name ] | [ -v ] | [ --help ]"
+			echo "`basename ${arg0}`: uasage: [ -ftp operation ftp_path ] | [ -find log_name ] | [ -del log_name | date ] | [ -v ] | [ --help ]"
 			;;
 	esac
 	

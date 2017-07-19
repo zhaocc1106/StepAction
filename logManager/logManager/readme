@@ -1,0 +1,24 @@
+本工具是log文件管理工具，主要包括log一键下载、log目录查询、删除特定日期之前的log等功能，方便研发快速下载log并进入log目录，只需两三条命令即可。
+
+
+1. 环境安装：
+使用sudo apt-get install putty-tools命令安装putty工具；
+使用sudo apt-get install openssh-server命令安装sshd工具；
+将logManager目录和logm可执行文件拷贝到~/bin/目录下
+
+
+2. 执行logm命令
+命令格式如下：
+    logm arg1 [arg2] [arg3]
+
+    [arg1]
+	-ftp:ftp操作
+		-down cqlog目录：从cqlog路径中下载log（例如 logm -ftp -down SPCSS/2017-2/SPCSS00402855）
+	-find:查找cq log目录
+		cqID:根据cq号查找log路径（例如 logm -find SPCSS00402855）
+	-del:删除操作 
+		-cq:根据cq号删除log（例如 logm -del -cq SPCSS00402855）
+		-date:删除特定日期之前的log（例如 logm -del -date 170629）,注意日期格式。
+	--help:显示帮助文档
+	-v:显示当前版本
+
