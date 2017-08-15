@@ -92,7 +92,15 @@ function download_log () {
 	cqID=${download_path##*/}
 #	echo "cqID = $cqID"
 
+#	echo ${DEFAULT_LOG_DIR}
 	file_full_path=${DEFAULT_LOG_DIR}/$(date +%y%m%d)_$cqID
+#	echo $file_full_path
+
+	if [ -e ${DEFAULT_LOG_DIR}/*_$cqID ];then
+		if [ ! -e ${file_full_path} ]; then
+			mv ${DEFAULT_LOG_DIR}/*_$cqID $file_full_path		#rename log dir
+		fi
+	fi
 
 	mkdir -p $file_full_path
 
@@ -102,7 +110,7 @@ function download_log () {
 
 	read -p "yes[y] no[n]" sel 
 
-	if [ $sel = "y" ]; then
+	if [ "$sel" = "y" ]; then
 		
 		skipfirst=1
 		while read line
@@ -129,7 +137,7 @@ function download_log () {
 
 
 
-			echo -e "\033[32mdownload $name to $file_full_path...\033[0m"
+			echo -e "\033[32mdownload $name to $file_full_path ...\033[0m"
 #			echo "pscp -l ${user} -pw ${passwd} ${host}:${download_path}/$name $file_full_path"
 			pscp -l ${user} -pw ${passwd} "${host}:${download_path}/$name" $file_full_path
 
@@ -147,7 +155,7 @@ function download_log () {
 	for id in $array_id
 	do
 #		echo "pscp -l ${user} -pw ${passwd} ${host}:${download_path}/${file_array[$id]} $file_full_path"
-		 echo -e "\033[32mdownload ${file_array[$id]} to $file_full_path...\033[0m"
+		 echo -e "\033[32mdownload ${file_array[$id]} to $file_full_path ...\033[0m"
 		pscp -l ${user} -pw ${passwd} "${host}:${download_path}/${file_array[$id]}" $file_full_path
 	done
 }

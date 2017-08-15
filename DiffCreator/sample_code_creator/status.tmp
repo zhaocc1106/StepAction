@@ -1,4 +1,10 @@
-On branch sprdroid7.0_trunk
-Your branch is up-to-date with 'korg/sprdroid7.0_trunk'.
+HEAD detached from 90bf264
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git checkout -- <file>..." to discard changes in working directory)
 
-nothing to commit, working directory clean
+	modified:   src/com/android/settings/DevelopmentSettings.java
+	modified:   src/com/android/settings/bluetooth/BluetoothSettings.java
+	modified:   src/com/android/settings/location/LocationSettings.java
+
+no changes added to commit (use "git add" and/or "git commit -a")

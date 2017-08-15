@@ -306,7 +306,7 @@ function upload_sample_code () {
 		read upload_path
 		if [ -z $upload_path ]; then
 			echo "null path"
-			return
+			return  
 		fi
 		#echo $upload_path
 

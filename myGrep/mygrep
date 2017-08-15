@@ -10,7 +10,9 @@ arg6=$6
 #echo $arg3 $arg4 $arg5 $arg6
 
 
-FILE_NAME="${HOME}/bin/myConfig.conf"
+FILE_NAME="${HOME}/bin/mygrep_conf/myConfig.conf"
+HELP_FILE="${HOME}/bin/mygrep_conf/readme"
+#echo $FILE_NAME
 
 
 line=""
@@ -96,7 +98,7 @@ function grep_by_tag () {
 			fi
 		fi
 	done < $FILE_NAME
-	if [ $tag_found == "" ]; then
+	if [ "$tag_found" == "" ]; then
 		echo "tag not found for $type_major $type_minor"
 	else
 		#echo "tag = $tag_found"
@@ -110,7 +112,16 @@ function grep_by_tag () {
 
 # The main function.
 function main () {
-	if [ $type_minor = "-help" ]
+	if [ "$type_major" = "--help" ]; then
+		cat $HELP_FILE
+		return
+	else if [ "$type_major" = "-v" ]; then
+			echo "1.0.0"
+			return
+		fi
+	fi
+
+	if [ "$type_minor" = "-show" ]
 	then
 		show_help
 	else

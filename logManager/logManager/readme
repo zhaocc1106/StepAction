@@ -15,7 +15,7 @@
 	-ftp:ftp操作
 		-down cqlog目录：从cqlog路径中下载log（例如 logm -ftp -down SPCSS/2017-2/SPCSS00402855）
 	-find:查找cq log目录
-		cqID:根据cq号查找log路径（例如 logm -find SPCSS00402855）
+		cqID:根据cq号查找本地log路径（例如 logm -find SPCSS00402855）
 	-del:删除操作 
 		-cq:根据cq号删除log（例如 logm -del -cq SPCSS00402855）
 		-date:删除特定日期之前的log（例如 logm -del -date 170629）,注意日期格式。

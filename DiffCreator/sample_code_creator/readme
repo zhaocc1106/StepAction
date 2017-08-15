@@ -19,16 +19,20 @@ frameworks/base
 命令格式如下：
     gsc arg1 [arg2] [sample_code_name|diff_dir]
 
-    [arg1]
 	-g(generate):生成
+		-k(keep):生成sample code并在代码中保留修改
+		-c(clear):生成sample code并在代码中清除掉修改
 	-gz(generate and zip):生成并压缩打包
-	-dl(diff list):与diffList相关的操作    	
+		-k(keep):生成sample code并在代码中保留修改
+		-c(clear):生成sample code并在代码中清除掉修改
+	-dl(diff list):与diffList相关的操作
+		-c(clear):清理diffList
+		-s(show):显示当前diffList
+		-a(add):添加diff目录项到diffList,待添加项使用空格隔开
+		-d(delete):从diffList中删除指定的diff目录项，待删除项使用空格隔开
 	--help:显示帮助文档
 	-v:显示当前版本
-    [arg2]
-	-k(keep):对应于-g -gz 生成sample code并在代码中保留修改
-	-c(clear):对应于-g -gz 生成sample code并在代码中清除掉修改
-		  对应于-dl 清理diffList
-	-s(show):对应于-dl 显示当前diffList
-	-a(add):对应于-dl 添加diff目录项到diffList,待添加项使用空格隔开
-	-d(delete):对应于-dl 从diffList中删除指定的diff目录项，待删除项使用空格隔开
+
+4.
+1.2.0版本以后添加了sample code上传的功能，生成sample code后请将弹出meld工具关闭，会自动提示是否上传sample code到ftp，具体输入见提醒即可。
+sample code的上传功能需要本地安装了putty-tools工具，请使用udo apt-get install putty-tools命令安装即可。
